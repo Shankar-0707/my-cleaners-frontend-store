@@ -26,13 +26,14 @@ import { toast } from 'sonner';
 
 const Orders = () => {
   const { setPageTitle } = useLayout();
-  const { orders, updateOrderStatus, cancelOrder } = useOrders();
+  const { orders, totalOrders, isLoading, fetchOrdersData, updateOrderStatus, cancelOrder } = useOrders();
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState<StatusFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [serviceFilter, setServiceFilter] = useState<ServiceType | 'all'>('all');
   const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({});
+  const [page, setPage] = useState(1);
 
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
@@ -43,51 +44,30 @@ const Orders = () => {
     setPageTitle('Orders');
   }, [setPageTitle]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchOrdersData(page, activeTab === 'all' ? undefined : activeTab, searchQuery);
+    }, 500); // Debounce search
+    return () => clearTimeout(timer);
+  }, [page, activeTab, searchQuery, fetchOrdersData]);
+
   const statusCounts = useMemo(() => {
+    // Note: Counting all statuses correctly might require a separate backend call
+    // For now we use the total count for the active tab or total orders
     const counts: Record<StatusFilter, number> = {
-      all: orders.length,
-      pending: 0,
-      pickup_assigned: 0,
-      processing: 0,
-      ready: 0,
-      drop_assigned: 0,
-      delivered: 0,
-      cancelled: 0,
+      all: totalOrders,
+      pending: activeTab === 'pending' ? totalOrders : 0,
+      pickup_assigned: activeTab === 'pickup_assigned' ? totalOrders : 0,
+      processing: activeTab === 'processing' ? totalOrders : 0,
+      ready: activeTab === 'ready' ? totalOrders : 0,
+      drop_assigned: activeTab === 'drop_assigned' ? totalOrders : 0,
+      delivered: activeTab === 'delivered' ? totalOrders : 0,
+      cancelled: activeTab === 'cancelled' ? totalOrders : 0,
     };
-
-    orders.forEach((order) => {
-      counts[order.status]++;
-    });
-
     return counts;
-  }, [orders]);
+  }, [totalOrders, activeTab]);
 
-  const filteredOrders = useMemo(() => {
-    return orders.filter((order) => {
-      // Status filter
-      if (activeTab !== 'all' && order.status !== activeTab) {
-        return false;
-      }
-
-      // Service filter
-      if (serviceFilter !== 'all' && order.serviceType !== serviceFilter) {
-        return false;
-      }
-
-      // Search filter
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        const matches =
-          order.orderCode.toLowerCase().includes(query) ||
-          order.challanNo?.toLowerCase().includes(query) ||
-          order.customerName.toLowerCase().includes(query) ||
-          order.customerPhone.includes(query);
-        if (!matches) return false;
-      }
-
-      return true;
-    });
-  }, [orders, activeTab, serviceFilter, searchQuery]);
+  const filteredOrders = orders; // Now handled by backend
 
   const handleUpdateStatus = (order: Order) => {
     setSelectedOrder(order);
@@ -139,9 +119,8 @@ const Orders = () => {
           <button
             key={status}
             onClick={() => setActiveTab(status)}
-            className={`kpi-card text-left ${
-              activeTab === status ? 'ring-2 ring-primary' : ''
-            }`}
+            className={`kpi-card text-left ${activeTab === status ? 'ring-2 ring-primary' : ''
+              }`}
           >
             <p className="text-xs text-muted-foreground capitalize">
               {status === 'all' ? 'All' : status.replace('_', ' ')}

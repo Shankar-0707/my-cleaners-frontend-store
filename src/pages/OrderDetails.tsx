@@ -35,17 +35,17 @@ import {
 import { getServiceLabel, canCancelOrder, OrderStatus, getNextStatus } from '@/lib/mockData';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { generateInvoiceApi, generateTagsApi, printTagsApi } from '@/services/api';
 
 const OrderDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { setPageTitle } = useLayout();
-  const { getOrder, updateOrderStatus, cancelOrder, updateChallan, addPayment } = useOrders();
+  const { getOrder, fetchOrderById, updateOrderStatus, cancelOrder, updateChallan, addPayment } = useOrders();
 
-  const order = getOrder(id || '');
-
+  const [order, setOrder] = useState<any>(getOrder(id || ''));
   const [editingChallan, setEditingChallan] = useState(false);
-  const [challanNo, setChallanNo] = useState(order?.challanNo || '');
+  const [challanNo, setChallanNo] = useState('');
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
@@ -54,11 +54,17 @@ const OrderDetails = () => {
   const [paymentMethod, setPaymentMethod] = useState('Cash');
 
   useEffect(() => {
-    if (order) {
-      setPageTitle(`Order ${order.orderCode}`);
-      setChallanNo(order.challanNo || '');
-    }
-  }, [order, setPageTitle]);
+    const loadOrder = async () => {
+      if (!id) return;
+      const data = await fetchOrderById(id);
+      if (data) {
+        setOrder(data);
+        setChallanNo(data.challanNo || '');
+        setPageTitle(`Order ${data.orderCode}`);
+      }
+    };
+    loadOrder();
+  }, [id, fetchOrderById, setPageTitle]);
 
   if (!order) {
     return (
@@ -76,26 +82,54 @@ const OrderDetails = () => {
     setEditingChallan(false);
   };
 
-  const handleUpdateStatus = () => {
+  const handleUpdateStatus = async () => {
     if (newStatus) {
-      updateOrderStatus(order.id, newStatus);
+      await updateOrderStatus(order.id, newStatus);
       setStatusDialogOpen(false);
       setNewStatus('');
+      // Refresh order
+      const refreshed = await fetchOrderById(order.id);
+      if (refreshed) setOrder(refreshed);
     }
   };
 
-  const handleAddPayment = () => {
+  const handleAddPayment = async () => {
     const amount = parseFloat(paymentAmount);
     if (amount > 0) {
-      addPayment(order.id, amount, paymentMethod);
+      await addPayment(order.id, amount, paymentMethod);
       setPaymentDialogOpen(false);
       setPaymentAmount('');
+      // Refresh order
+      const refreshed = await fetchOrderById(order.id);
+      if (refreshed) setOrder(refreshed);
     }
   };
 
-  const handleConfirmCancel = (reason: string) => {
-    cancelOrder(order.id, reason);
+  const handleConfirmCancel = async (reason: string) => {
+    await cancelOrder(order.id, reason);
     setCancelDialogOpen(false);
+    // Refresh order
+    const refreshed = await fetchOrderById(order.id);
+    if (refreshed) setOrder(refreshed);
+  };
+
+  const handlePrintTags = async () => {
+    try {
+      await generateTagsApi(order.id);
+      await printTagsApi(order.id);
+      toast.success('Tags generated and sent to print');
+    } catch (error) {
+      toast.error('Failed to generate tags');
+    }
+  };
+
+  const handleGenerateInvoice = async () => {
+    try {
+      await generateInvoiceApi(order.id);
+      toast.success('Invoice generated successfully');
+    } catch (error) {
+      toast.error('Failed to generate invoice');
+    }
   };
 
   const totalPaid = order.payments.reduce((sum, p) => sum + p.amount, 0);
@@ -272,9 +306,8 @@ const OrderDetails = () => {
                   <div className="flex justify-between pt-4 border-t">
                     <span className="font-medium">Balance Due</span>
                     <span
-                      className={`font-bold ${
-                        balance > 0 ? 'text-destructive' : 'text-green-600'
-                      }`}
+                      className={`font-bold ${balance > 0 ? 'text-destructive' : 'text-green-600'
+                        }`}
                     >
                       ₹{balance}
                     </span>
@@ -316,7 +349,7 @@ const OrderDetails = () => {
               <Button
                 variant="outline"
                 className="w-full justify-start gap-2"
-                onClick={() => navigate(`/tags?order=${order.id}`)}
+                onClick={handlePrintTags}
               >
                 <Tags className="h-4 w-4" />
                 Print Tags
@@ -324,7 +357,7 @@ const OrderDetails = () => {
               <Button
                 variant="outline"
                 className="w-full justify-start gap-2"
-                onClick={() => navigate(`/invoices?order=${order.id}`)}
+                onClick={handleGenerateInvoice}
               >
                 <Receipt className="h-4 w-4" />
                 Generate Invoice

@@ -9,8 +9,8 @@ import { toast } from 'sonner';
 import { loginUser } from '@/services/api';
 const Login = () => {
   const navigate = useNavigate();
-  const { login, isAuthenticated } = useAuth();
-  const [email, setEmail] = useState('');
+  const { login, isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -18,40 +18,13 @@ const Login = () => {
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
   }
-//  yeh login method ke lie api haiii
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   setIsLoading(true);
-  
-  //   try {
-  //     // 🔹 call real backend login API
-  //     const data = await loginUser(email, password);
-  
-  //     // 🔹 save token
-  //     localStorage.setItem("token", data.token);
-  
-  //     // 🔹 save user info (optional but useful)
-  //     localStorage.setItem("user", JSON.stringify(data.user));
-  
-  //     toast.success("Welcome back!");
-  
-  //     // 🔹 redirect to dashboard
-  //     navigate("/dashboard");
-  //   } catch (error: any) {
-  //     toast.error(
-  //       error?.response?.data?.message || "Invalid credentials"
-  //     );
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const success = await login(email, password);
+      const success = await login(mobile, password);
       if (success) {
         toast.success('Welcome back!');
         navigate('/dashboard');
@@ -85,13 +58,13 @@ const Login = () => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Mobile / Email</Label>
+              <Label htmlFor="mobile">Mobile Number</Label>
               <Input
-                id="email"
+                id="mobile"
                 type="text"
-                placeholder="Enter your mobile or email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your mobile number"
+                value={mobile}
+                onChange={(e) => setMobile(e.target.value)}
                 required
               />
             </div>
@@ -124,9 +97,9 @@ const Login = () => {
             <Button
               type="submit"
               className="w-full bg-primary hover:bg-primary/90"
-              disabled={isLoading}
+              disabled={isLoading || isAuthLoading}
             >
-              {isLoading ? 'Signing in...' : 'Login'}
+              {isLoading || isAuthLoading ? 'Signing in...' : 'Login'}
             </Button>
           </form>
 
@@ -137,7 +110,7 @@ const Login = () => {
 
         {/* Demo Hint */}
         <p className="text-center text-xs text-muted-foreground mt-4">
-          Demo: Enter any email and password to login
+          Demo: Enter your mobile and password to login
         </p>
       </div>
     </div>

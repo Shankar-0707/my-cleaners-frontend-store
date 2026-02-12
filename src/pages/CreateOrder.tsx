@@ -23,7 +23,6 @@ import {
 import { toast } from 'sonner';
 
 
-import { createOrder } from '@/services/api';
 const CreateOrder = () => {
   const { setPageTitle } = useLayout();
   //const { addOrder } = useOrders();
@@ -116,35 +115,30 @@ const CreateOrder = () => {
     }
   };
 
-  const handleSubmit = (action: 'save' | 'save_tags' | 'save_invoice') => {
+  const handleSubmit = async (action: 'save' | 'save_tags' | 'save_invoice') => {
     if (!validate()) {
       toast.error('Please fix the validation errors');
       return;
     }
 
-    const order = addOrder({
-      customerName,
-      customerPhone,
-      customerAddress: customerAddress || undefined,
-      notes: notes || undefined,
-      challanNo,
-      serviceType,
-      status: 'pending',
-      pickupSlot: 'Today, Walk-in',
-      dropSlot: 'Tomorrow, 4:00 PM - 6:00 PM',
-      totalAmount: calculateTotal(),
-      weight: serviceType === 'laundry' ? parseFloat(weight) : undefined,
-      pieces: serviceType === 'laundry' ? parseInt(pieces) : undefined,
-      items: serviceType === 'dryclean' ? items : undefined,
-      source: 'walkin',
+    const order = await addOrder({
+      challan_no: challanNo,
+      customerData: {
+        full_name: customerName,
+        mobile: customerPhone,
+        address_line1: customerAddress || 'N/A',
+      },
+      note: notes || undefined,
     });
 
-    if (action === 'save_tags') {
-      navigate(`/tags?order=${order.id}`);
-    } else if (action === 'save_invoice') {
-      navigate(`/invoices?order=${order.id}`);
-    } else {
-      navigate('/orders');
+    if (order) {
+      if (action === 'save_tags') {
+        navigate(`/tags?order=${order.id}`);
+      } else if (action === 'save_invoice') {
+        navigate(`/invoices?order=${order.id}`);
+      } else {
+        navigate('/orders');
+      }
     }
   };
 

@@ -2,18 +2,8 @@ import axios from "axios";
 
 /** Axios instance */
 const api = axios.create({
-  baseURL: "http://localhost:5000/api",
-});
-
-/** Attach token automatically */
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-
-  if (token && config.headers) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  return config;
+  baseURL: "http://localhost:5000/v1/api",
+  withCredentials: true
 });
 
 /* ================= AUTH ================= */
@@ -24,33 +14,43 @@ export const loginUser = async (mobile: string, password: string) => {
   return res.data;
 };
 
+/** Get My Store Info */
+export const getStoreMe = async () => {
+  const res = await api.get("/stores/me");
+  return res.data;
+};
+
 /* ================= ORDERS ================= */
 
+/** List orders paginated */
+export const fetchOrders = async (params: { page?: number; limit?: number; status?: string; q?: string }) => {
+  const res = await api.get("/orders", { params });
+  return res.data;
+};
+
+/** Get single order */
+export const fetchOrderByIdApi = async (id: string) => {
+  const res = await api.get(`/orders/${id}`);
+  return res.data;
+};
+
 /** Create walk-in order */
-export const createOrder = async (data: {
+export const createOrderApi = async (data: {
   challan_no: string;
-  customer: { full_name: string; mobile: string };
+  customerData: {
+    mobile: string;
+    full_name: string;
+    address_line1: string;
+    email?: string;
+  };
+  note?: string;
 }) => {
   const res = await api.post("/orders", data);
   return res.data;
 };
 
-/** Add item to order */
-export const addOrderItem = async (
-  orderId: string,
-  data: {
-    service_type: string;
-    item_name: string;
-    qty: number;
-    unit_price: number;
-  }
-) => {
-  const res = await api.post(`/orders/${orderId}/items`, data);
-  return res.data;
-};
-
 /** Update order status */
-export const updateOrderStatus = async (
+export const updateOrderStatusApi = async (
   orderId: string,
   to_status: string
 ) => {
@@ -58,18 +58,69 @@ export const updateOrderStatus = async (
   return res.data;
 };
 
-/** Generate invoice */
-export const generateInvoice = async (orderId: string) => {
+/* ================= ORDER ITEMS ================= */
+
+/** Add item to order */
+export const addOrderItemApi = async (
+  orderId: string,
+  item: {
+    service_type: string;
+    item_name: string;
+    qty: number;
+    unit_price: number;
+  }
+) => {
+  const res = await api.post(`/orders/${orderId}/items`, item);
+  return res.data;
+};
+
+/* ================= TAGS ================= */
+
+/** Generate tags for order */
+export const generateTagsApi = async (orderId: string) => {
+  const res = await api.post(`/orders/${orderId}/tags/generate`);
+  return res.data;
+};
+
+/** Print tags for order */
+export const printTagsApi = async (orderId: string) => {
+  const res = await api.post(`/orders/${orderId}/tags/print`);
+  return res.data;
+};
+
+/* ================= INVOICES ================= */
+
+/** Generate invoice for order */
+export const generateInvoiceApi = async (orderId: string) => {
   const res = await api.post(`/orders/${orderId}/invoice`);
   return res.data;
 };
 
-/** Add payment */
-export const addPayment = async (
+/* ================= PAYMENTS ================= */
+
+/** Record payment for order */
+export const recordPaymentApi = async (
   orderId: string,
-  data: { amount: number; method: string }
+  data: { amount: number; method: string; note?: string }
 ) => {
   const res = await api.post(`/orders/${orderId}/payments`, data);
+  return res.data;
+};
+
+/* ================= PICKUPS ================= */
+
+/** List assigned pickup requests */
+export const fetchPickupsApi = async () => {
+  const res = await api.get("/pickup-requests");
+  return res.data;
+};
+
+/** Convert pickup to order */
+export const convertPickupApi = async (
+  id: string,
+  data: { challan_no: string; customer?: any }
+) => {
+  const res = await api.post(`/pickup-requests/${id}/convert`, data);
   return res.data;
 };
 
