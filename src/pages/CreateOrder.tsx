@@ -22,9 +22,11 @@ import {
 } from '@/lib/mockData';
 import { toast } from 'sonner';
 
+
+import { createOrder } from '@/services/api';
 const CreateOrder = () => {
   const { setPageTitle } = useLayout();
-  const { addOrder } = useOrders();
+  //const { addOrder } = useOrders();
   const navigate = useNavigate();
 
   const [customerName, setCustomerName] = useState('');
@@ -39,7 +41,7 @@ const CreateOrder = () => {
   const [homeService, setHomeService] = useState('');
   const [homePrice, setHomePrice] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
-
+  const { addOrder } = useOrders();
   useEffect(() => {
     setPageTitle('Create Walk-in Order');
   }, [setPageTitle]);
@@ -428,3 +430,241 @@ const CreateOrder = () => {
 };
 
 export default CreateOrder;
+// import { useEffect, useState } from 'react';
+// import { useNavigate } from 'react-router-dom';
+// import { Plus, Trash2, Save, Tags, Receipt } from 'lucide-react';
+// import { useLayout } from '@/components/layout/AppLayout';
+// // ❌ REMOVED: useOrders (fake local storage)
+// // import { useOrders } from '@/contexts/OrderContext';
+
+// import { Button } from '@/components/ui/button';
+// import { Input } from '@/components/ui/input';
+// import { Label } from '@/components/ui/label';
+// import { Textarea } from '@/components/ui/textarea';
+// import {
+//   Select,
+//   SelectContent,
+//   SelectItem,
+//   SelectTrigger,
+//   SelectValue,
+// } from '@/components/ui/select';
+// import {
+//   ServiceType,
+//   OrderItem,
+//   dryCleanItems,
+//   homeCleaningServices,
+// } from '@/lib/mockData';
+// import { toast } from 'sonner';
+
+// // ✅ ADDED: real backend API import
+// import { createOrder } from '@/services/api';
+// import axios from "axios";
+
+// const CreateOrder = () => {
+//   const { setPageTitle } = useLayout();
+//   const navigate = useNavigate();
+
+//   // ❌ REMOVED: const { addOrder } = useOrders();
+
+//   const [customerName, setCustomerName] = useState('');
+//   const [customerPhone, setCustomerPhone] = useState('');
+//   const [customerAddress, setCustomerAddress] = useState('');
+//   const [notes, setNotes] = useState('');
+//   const [challanNo, setChallanNo] = useState('');
+//   const [serviceType, setServiceType] = useState<ServiceType>('laundry');
+//   const [weight, setWeight] = useState('');
+//   const [pieces, setPieces] = useState('');
+//   const [items, setItems] = useState<OrderItem[]>([]);
+//   const [homeService, setHomeService] = useState('');
+//   const [homePrice, setHomePrice] = useState('');
+//   const [errors, setErrors] = useState<Record<string, string>>({});
+
+//   useEffect(() => {
+//     setPageTitle('Create Walk-in Order');
+//   }, [setPageTitle]);
+
+//   /** ---------------- VALIDATION ---------------- */
+//   const validate = (): boolean => {
+//     const newErrors: Record<string, string> = {};
+
+//     if (!customerName.trim()) newErrors.customerName = 'Name is required';
+//     if (!customerPhone.trim()) newErrors.customerPhone = 'Phone is required';
+//     if (!challanNo.trim()) newErrors.challanNo = 'Challan number is required';
+
+//     setErrors(newErrors);
+//     return Object.keys(newErrors).length === 0;
+//   };
+
+//   /** ---------------- HANDLE SUBMIT (MAIN CHANGE) ---------------- */
+//   // 🔴 OLD: used addOrder() from local context
+//   // 🟢 NEW: calls backend createOrder API
+
+//   const handleSubmit = async (
+//     action: 'save' | 'save_tags' | 'save_invoice'
+//   ) => {
+//     if (!validate()) {
+//       toast.error('Please fix the validation errors');
+//       return;
+//     }
+
+//     try {
+//       // ✅ BACKEND API CALL
+//       const data = await createOrder({
+//         challan_no: challanNo,
+//         customer: {
+//           full_name: customerName,
+//           mobile: customerPhone,
+//         },
+//       });
+
+//       toast.success('Order created successfully');
+
+//       // ✅ GET REAL ORDER ID FROM BACKEND RESPONSE
+//       const orderId = data.order.id;
+
+//       // ✅ NAVIGATION BASED ON BUTTON ACTION
+//       if (action === 'save_tags') {
+//         navigate(`/orders/${orderId}/tags`);
+//       } else if (action === 'save_invoice') {
+//         navigate(`/orders/${orderId}/invoice`);
+//       } else {
+//         navigate(`/orders/${orderId}`);
+//       }
+//     } catch (error: unknown) {
+//       if (axios.isAxiosError(error)) {
+//         toast.error(error.response?.data?.message || "Failed to create order");
+//       } else {
+//         toast.error("Something went wrong");
+//       }
+//     }
+    
+//   };
+
+//   /** ---------------- TOTAL CALCULATION (UI ONLY) ---------------- */
+//   const calculateTotal = (): number => {
+//     if (serviceType === 'laundry') {
+//       return parseFloat(weight || '0') * 80;
+//     }
+//     if (serviceType === 'dryclean') {
+//       return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+//     }
+//     if (serviceType === 'home_cleaning') {
+//       return parseFloat(homePrice || '0');
+//     }
+//     return 0;
+//   };
+
+//   /** ---------------- DRY CLEAN ITEM HELPERS ---------------- */
+//   const addDryCleanItem = () => {
+//     setItems([
+//       ...items,
+//       { id: `item-${Date.now()}`, name: '', quantity: 1, price: 0 },
+//     ]);
+//   };
+
+//   const updateItem = (index: number, updates: Partial<OrderItem>) => {
+//     setItems(
+//       items.map((item, i) => (i === index ? { ...item, ...updates } : item))
+//     );
+//   };
+
+//   const removeItem = (index: number) => {
+//     setItems(items.filter((_, i) => i !== index));
+//   };
+
+//   const handleDryCleanItemSelect = (index: number, itemName: string) => {
+//     const itemData = dryCleanItems.find((i) => i.name === itemName);
+//     if (itemData) {
+//       updateItem(index, { name: itemData.name, price: itemData.price });
+//     }
+//   };
+
+//   const handleHomeServiceSelect = (serviceName: string) => {
+//     const service = homeCleaningServices.find((s) => s.name === serviceName);
+//     if (service) {
+//       setHomeService(service.name);
+//       setHomePrice(service.price.toString());
+//     }
+//   };
+
+//   /** ---------------- UI ---------------- */
+//   return (
+//     <div className="max-w-4xl mx-auto animate-fade-in">
+//       <div className="space-y-6">
+
+//         {/* CUSTOMER DETAILS */}
+//         <div className="card-elevated p-6">
+//           <h2 className="text-lg font-semibold mb-4">Customer Details</h2>
+
+//           <div className="grid gap-4 sm:grid-cols-2">
+//             <Input
+//               placeholder="Customer Name"
+//               value={customerName}
+//               onChange={(e) => setCustomerName(e.target.value)}
+//             />
+//             <Input
+//               placeholder="Phone Number"
+//               value={customerPhone}
+//               onChange={(e) => setCustomerPhone(e.target.value)}
+//             />
+//             <Input
+//               placeholder="Address (optional)"
+//               value={customerAddress}
+//               onChange={(e) => setCustomerAddress(e.target.value)}
+//               className="sm:col-span-2"
+//             />
+//             <Textarea
+//               placeholder="Notes (optional)"
+//               value={notes}
+//               onChange={(e) => setNotes(e.target.value)}
+//               className="sm:col-span-2"
+//             />
+//           </div>
+//         </div>
+
+//         {/* CHALLAN */}
+//         <div className="card-elevated p-6">
+//           <h2 className="text-lg font-semibold mb-4">Challan Number</h2>
+//           <Input
+//             placeholder="Enter challan number"
+//             value={challanNo}
+//             onChange={(e) => setChallanNo(e.target.value)}
+//           />
+//         </div>
+
+//         {/* TOTAL */}
+//         <div className="card-elevated p-6 flex justify-between">
+//           <span className="text-lg font-medium">Estimated Total</span>
+//           <span className="text-2xl font-bold text-primary">
+//             ₹{calculateTotal().toLocaleString()}
+//           </span>
+//         </div>
+
+//         {/* ACTION BUTTONS */}
+//         <div className="flex gap-3 justify-end">
+//           <Button variant="outline" onClick={() => navigate('/orders')}>
+//             Cancel
+//           </Button>
+
+//           {/* 🟢 NOW ALL BUTTONS CALL BACKEND */}
+//           <Button variant="outline" onClick={() => handleSubmit('save')}>
+//             <Save className="h-4 w-4 mr-2" />
+//             Save Order
+//           </Button>
+
+//           <Button variant="outline" onClick={() => handleSubmit('save_tags')}>
+//             <Tags className="h-4 w-4 mr-2" />
+//             Save + Print Tags
+//           </Button>
+
+//           <Button onClick={() => handleSubmit('save_invoice')}>
+//             <Receipt className="h-4 w-4 mr-2" />
+//             Save + Generate Invoice
+//           </Button>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default CreateOrder;

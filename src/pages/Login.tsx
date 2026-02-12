@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-
+import { loginUser } from '@/services/api';
 const Login = () => {
   const navigate = useNavigate();
   const { login, isAuthenticated } = useAuth();
@@ -18,7 +18,34 @@ const Login = () => {
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
   }
-
+//  yeh login method ke lie api haiii
+  // const handleSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   setIsLoading(true);
+  
+  //   try {
+  //     // 🔹 call real backend login API
+  //     const data = await loginUser(email, password);
+  
+  //     // 🔹 save token
+  //     localStorage.setItem("token", data.token);
+  
+  //     // 🔹 save user info (optional but useful)
+  //     localStorage.setItem("user", JSON.stringify(data.user));
+  
+  //     toast.success("Welcome back!");
+  
+  //     // 🔹 redirect to dashboard
+  //     navigate("/dashboard");
+  //   } catch (error: any) {
+  //     toast.error(
+  //       error?.response?.data?.message || "Invalid credentials"
+  //     );
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);

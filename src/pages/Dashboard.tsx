@@ -61,17 +61,17 @@ const Dashboard = () => {
     <div className="space-y-6 animate-fade-in">
       {/* Quick Actions */}
       <div className="flex gap-3">
-        <Button
+        {/* <Button
           onClick={() => navigate('/orders/create')}
           className="gap-2 bg-primary hover:bg-primary/90"
         >
           <PlusCircle className="h-4 w-4" />
-          Create Walk-in Order
-        </Button>
-        <Button variant="outline" className="gap-2">
+          Create Walk-in Orde
+        </Button> */}
+        {/* <Button variant="outline" className="gap-2">
           <Receipt className="h-4 w-4" />
           Print Last Invoice
-        </Button>
+        </Button> */}
       </div>
 
       {/* KPI Cards */}
@@ -121,7 +121,7 @@ const Dashboard = () => {
       {/* Today's Pickups */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Today's Pickups</h2>
+          <h2 className="text-lg font-semibold">Orders</h2>
           <Button
             variant="ghost"
             size="sm"

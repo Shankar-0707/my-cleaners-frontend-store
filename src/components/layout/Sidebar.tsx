@@ -8,6 +8,7 @@ import {
   Settings,
   LogOut,
   Shirt,
+  Truck  
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
@@ -15,7 +16,8 @@ import { cn } from '@/lib/utils';
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { icon: ClipboardList, label: 'Orders', path: '/orders' },
-  { icon: PlusCircle, label: 'Create Walk-in Order', path: '/orders/create' },
+  { icon: PlusCircle, label: 'Create Order', path: '/orders/create' },
+  { icon: Truck, label: 'Pickup Request', path: '/pickup-request' },
   { icon: Tags, label: 'Tags', path: '/tags' },
   { icon: Receipt, label: 'Invoices', path: '/invoices' },
   { icon: Settings, label: 'Settings', path: '/settings' },
